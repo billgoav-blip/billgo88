@@ -1,0 +1,600 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BILLGO 比爾購｜父親節抽獎機</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@500;700;900&family=Noto+Sans+TC:wght@400;500;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+  :root{
+    --navy: #16233F;
+    --navy-deep: #0E1830;
+    --navy-light: #2A3D66;
+    --charcoal: #241F1B;
+    --cream: #F3EEE1;
+    --paper: #FAF7EF;
+    --brass: #B9922F;
+    --brass-light: #D9B968;
+    --stamp: #9C3B34;
+    --thread: #EFE6CE;
+    --ink: #221D18;
+    --muted: #7B7263;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 15% -10%, rgba(185,146,47,0.10), transparent 60%),
+      radial-gradient(1000px 700px at 110% 10%, rgba(22,35,63,0.10), transparent 55%),
+      var(--cream);
+    font-family: "Noto Sans TC", sans-serif;
+    color: var(--ink);
+    min-height: 100vh;
+    padding: 48px 20px 80px;
+  }
+  .wrap{ max-width: 980px; margin: 0 auto; }
+
+  /* ===== Header — hanging garment tag ===== */
+  header{
+    display:flex; flex-direction:column; align-items:center;
+    margin-bottom: 40px;
+  }
+  .tagline-thread{
+    width:2px; height:26px; background: repeating-linear-gradient(180deg, var(--muted) 0 4px, transparent 4px 8px);
+    margin-bottom: -2px;
+  }
+  .tag{
+    background: var(--navy);
+    background-image: linear-gradient(160deg, var(--navy-light), var(--navy) 60%, var(--navy-deep));
+    border-radius: 14px;
+    padding: 26px 44px 22px;
+    position: relative;
+    box-shadow: 0 18px 40px -18px rgba(14,24,48,0.55), inset 0 1px 0 rgba(255,255,255,0.08);
+    text-align:center;
+  }
+  .tag::before{
+    content:"";
+    position:absolute; top:14px; left:50%; transform:translateX(-50%);
+    width:10px; height:10px; border-radius:50%;
+    background: var(--navy-deep);
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.15);
+  }
+  .eyebrow{
+    font-family:"Space Mono", monospace;
+    letter-spacing:0.22em;
+    font-size:11px;
+    color: var(--brass-light);
+    text-transform:uppercase;
+    margin-top:8px;
+  }
+  h1{
+    font-family:"Noto Serif TC", serif;
+    font-weight:900;
+    font-size: clamp(28px, 4.2vw, 44px);
+    color: var(--thread);
+    margin: 6px 0 4px;
+    letter-spacing: 0.02em;
+  }
+  .sub{
+    color: rgba(243,238,225,0.72);
+    font-size:14px;
+    font-family:"Noto Serif TC", serif;
+    letter-spacing: 0.04em;
+  }
+
+  /* ===== Stats row ===== */
+  .stats{
+    display:grid; grid-template-columns: repeat(3, 1fr);
+    gap:14px; margin: 34px 0 30px;
+  }
+  .stat{
+    background: var(--paper);
+    border: 1px solid rgba(34,29,24,0.08);
+    border-radius: 10px;
+    padding: 18px 16px;
+    text-align:center;
+    position: relative;
+  }
+  .stat::after{
+    content:"";
+    position:absolute; left:14px; right:14px; bottom:8px; height:1px;
+    background: repeating-linear-gradient(90deg, rgba(34,29,24,0.16) 0 5px, transparent 5px 10px);
+  }
+  .stat .num{
+    font-family:"Space Mono", monospace;
+    font-weight:700;
+    font-size: 30px;
+    color: var(--navy);
+  }
+  .stat .label{
+    font-size:12px; color: var(--muted); letter-spacing:0.08em; margin-top:4px;
+  }
+
+  /* ===== Control panel ===== */
+  .panel{
+    background: var(--paper);
+    border: 1px solid rgba(34,29,24,0.08);
+    border-radius: 14px;
+    padding: 26px;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px -20px rgba(34,29,24,0.25);
+  }
+  .panel-title{
+    font-family:"Noto Serif TC", serif;
+    font-weight:700; font-size:17px; margin: 0 0 16px;
+    display:flex; align-items:center; gap:8px;
+  }
+  .panel-title .swatch{
+    width:10px; height:10px; background: var(--brass); border-radius: 2px; display:inline-block;
+  }
+  .controls-row{
+    display:flex; flex-wrap:wrap; gap: 18px; align-items:flex-end; margin-bottom: 18px;
+  }
+  .field{ display:flex; flex-direction:column; gap:6px; }
+  .field label{
+    font-size:12px; color: var(--muted); letter-spacing:0.04em;
+  }
+  .field input[type=number]{
+    font-family:"Space Mono", monospace;
+    width:88px; padding:9px 10px; border-radius:8px;
+    border:1px solid rgba(34,29,24,0.18); font-size:16px; background:#fff;
+  }
+  .toggle{
+    display:flex; align-items:center; gap:8px; cursor:pointer; user-select:none;
+    font-size:13px; color:var(--ink);
+  }
+  .toggle input{ accent-color: var(--navy); width:16px; height:16px; }
+
+  .upload-row{
+    display:flex; align-items:center; gap:12px; flex-wrap:wrap;
+    padding-top:16px; border-top: 1px dashed rgba(34,29,24,0.18);
+  }
+  .upload-btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding: 9px 16px; border-radius:8px; border:1px solid var(--navy);
+    background:#fff; color:var(--navy); font-size:13px; cursor:pointer; font-weight:500;
+    transition: all .15s ease;
+  }
+  .upload-btn:hover{ background: var(--navy); color:#fff; }
+  #fileInput{ display:none; }
+  .upload-note{ font-size:12px; color: var(--muted); }
+
+  /* ===== Draw button — suit button ===== */
+  .draw-zone{ text-align:center; margin: 8px 0 42px; }
+  .draw-btn{
+    position:relative;
+    width:150px; height:150px; border-radius:50%;
+    background: radial-gradient(circle at 35% 30%, var(--brass-light), var(--brass) 55%, #8a6c1f 100%);
+    border: none; cursor:pointer;
+    box-shadow: 0 14px 30px -10px rgba(185,146,47,0.55), inset 0 2px 4px rgba(255,255,255,0.4), inset 0 -6px 10px rgba(0,0,0,0.18);
+    font-family:"Noto Serif TC", serif; font-weight:900; font-size:22px; color: var(--navy-deep);
+    transition: transform .12s ease;
+  }
+  .draw-btn:hover{ transform: translateY(-2px); }
+  .draw-btn:active{ transform: translateY(1px) scale(0.98); }
+  .draw-btn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
+  .draw-btn::before, .draw-btn::after{
+    content:""; position:absolute; width:6px; height:6px; border-radius:50%;
+    background: var(--navy-deep); box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);
+  }
+  .draw-btn::before{ top:38%; left:38%; }
+  .draw-btn::after{ top:38%; right:38%; }
+  .draw-btn .dot3{ position:absolute; width:6px; height:6px; border-radius:50%; background:var(--navy-deep); bottom:38%; left:38%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);}
+  .draw-btn .dot4{ position:absolute; width:6px; height:6px; border-radius:50%; background:var(--navy-deep); bottom:38%; right:38%; box-shadow: inset 0 1px 2px rgba(0,0,0,0.4);}
+
+  /* ===== Reveal window ===== */
+  .reveal{
+    background: var(--navy);
+    background-image: linear-gradient(160deg, var(--navy-light), var(--navy) 60%, var(--navy-deep));
+    border-radius: 16px;
+    padding: 30px 22px;
+    min-height: 130px;
+    display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:14px;
+    margin-bottom: 30px;
+    box-shadow: 0 20px 40px -22px rgba(14,24,48,0.6);
+  }
+  .reveal.empty .placeholder{
+    color: rgba(243,238,225,0.55); font-family:"Noto Serif TC", serif; font-size:15px; letter-spacing:0.05em;
+  }
+  .winner-chip{
+    font-family:"Space Mono", monospace;
+    background: var(--paper);
+    color: var(--navy);
+    padding: 12px 20px;
+    border-radius: 8px;
+    font-size: 20px;
+    font-weight:700;
+    box-shadow: 0 6px 16px -6px rgba(0,0,0,0.35);
+    animation: pop .38s cubic-bezier(.2,1.4,.4,1) both;
+  }
+  @keyframes pop{
+    0%{ transform: scale(0.4) rotate(-6deg); opacity:0; }
+    100%{ transform: scale(1) rotate(0deg); opacity:1; }
+  }
+  .spin-name{
+    font-family:"Space Mono", monospace;
+    color: var(--thread); font-size:22px; letter-spacing:0.02em;
+  }
+
+  /* ===== History — ticket stubs ===== */
+  .history-head{
+    display:flex; align-items:center; justify-content:space-between; margin: 0 0 14px;
+  }
+  .panel-title2{
+    font-family:"Noto Serif TC", serif; font-weight:700; font-size:17px;
+  }
+  .export-btn{
+    font-size:12px; color: var(--navy); background:none; border:1px solid rgba(34,29,24,0.2);
+    padding:7px 12px; border-radius:7px; cursor:pointer;
+  }
+  .export-btn:hover{ background: var(--navy); color:#fff; border-color:var(--navy); }
+
+  .stub-list{ display:flex; flex-direction:column; gap:10px; }
+  .stub{
+    background: var(--paper);
+    border-radius: 10px;
+    padding: 14px 18px;
+    display:flex; align-items:center; gap:14px;
+    position:relative;
+    border: 1px solid rgba(34,29,24,0.08);
+    animation: slidein .32s ease both;
+  }
+  @keyframes slidein{
+    0%{ opacity:0; transform: translateX(-8px); }
+    100%{ opacity:1; transform: translateX(0); }
+  }
+  .stub::before{
+    content:""; position:absolute; left:-6px; top:50%; transform:translateY(-50%);
+    width:12px; height:12px; border-radius:50%; background: var(--cream);
+    border: 1px solid rgba(34,29,24,0.1);
+  }
+  .stub .round-no{
+    font-family:"Space Mono", monospace; font-size:11px; color:var(--muted);
+    background: var(--thread); padding:3px 8px; border-radius:5px; white-space:nowrap;
+  }
+  .stub .name{
+    font-family:"Space Mono", monospace; font-weight:700; font-size:16px; color: var(--navy); flex:1;
+  }
+  .stub .stamp{
+    font-family:"Noto Serif TC", serif; font-weight:700; font-size:11px; letter-spacing:0.08em;
+    color: var(--stamp); border: 1.5px solid var(--stamp); border-radius: 4px;
+    padding: 2px 8px; transform: rotate(-4deg);
+  }
+  .stub .time{
+    font-size:11px; color: var(--muted); font-family:"Space Mono", monospace; white-space:nowrap;
+  }
+  .empty-history{
+    text-align:center; color: var(--muted); font-size:13px; padding: 30px 0; font-family:"Noto Serif TC", serif;
+  }
+
+  /* ===== Pool preview ===== */
+  .pool-panel{ margin-top: 30px; }
+  .pool-chips{
+    display:flex; flex-wrap:wrap; gap:6px; max-height: 160px; overflow-y:auto;
+    padding: 4px 2px;
+  }
+  .pool-chip{
+    font-family:"Space Mono", monospace; font-size:11.5px; color: var(--ink);
+    background: var(--thread); padding: 4px 9px; border-radius: 5px;
+    opacity: 0.85;
+  }
+  .pool-chip.won{ opacity: 0.3; text-decoration: line-through; }
+
+  footer{
+    text-align:center; margin-top:44px; color: var(--muted); font-size:11.5px;
+    font-family:"Space Mono", monospace; letter-spacing:0.04em;
+  }
+
+  @media (max-width:600px){
+    .stats{ grid-template-columns: 1fr; }
+    .controls-row{ flex-direction:column; align-items:stretch; }
+  }
+
+  .toast{
+    position:fixed; bottom:24px; left:50%; transform: translateX(-50%);
+    background: var(--navy); color:#fff; padding:10px 20px; border-radius:8px;
+    font-size:13px; box-shadow:0 10px 24px -10px rgba(0,0,0,0.4);
+    opacity:0; pointer-events:none; transition: opacity .25s ease, transform .25s ease;
+  }
+  .toast.show{ opacity:1; transform: translateX(-50%) translateY(-6px); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="tagline-thread"></div>
+    <div class="tag">
+      <div class="eyebrow">BILLGO · 比爾購</div>
+      <h1>父親節抽獎機</h1>
+      <div class="sub">我的講究，你就放心 — 留言抽獎名單</div>
+    </div>
+  </header>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="num" id="statTotal">0</div>
+      <div class="label">參加人數</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="statWon">0</div>
+      <div class="label">已抽出人數</div>
+    </div>
+    <div class="stat">
+      <div class="num" id="statLeft">0</div>
+      <div class="label">尚未抽出</div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title"><span class="swatch"></span>抽獎設定</div>
+    <div class="controls-row">
+      <div class="field">
+        <label for="drawCount">本次抽出人數</label>
+        <input type="number" id="drawCount" min="1" value="1">
+      </div>
+      <label class="toggle">
+        <input type="checkbox" id="noRepeat" checked>
+        不重複抽出（排除已中獎名單）
+      </label>
+    </div>
+    <div class="upload-row">
+      <label class="upload-btn" for="fileInput">📄 上傳 XLSX 名單（取代目前名單）</label>
+      <input type="file" id="fileInput" accept=".xlsx,.xls">
+      <span class="upload-note" id="uploadNote">目前使用內建名單，共 <b id="builtInCount">0</b> 人。上傳的檔案會自動抓取含帳號/username 的欄位。</span>
+    </div>
+  </div>
+
+  <div class="draw-zone">
+    <button class="draw-btn" id="drawBtn">
+      抽獎
+      <span class="dot3"></span><span class="dot4"></span>
+    </button>
+  </div>
+
+  <div class="reveal empty" id="reveal">
+    <div class="placeholder">按下「抽獎」開始抽出幸運兒</div>
+  </div>
+
+  <div class="panel">
+    <div class="history-head">
+      <div class="panel-title2">🎟 得獎名單</div>
+      <button class="export-btn" id="exportBtn">匯出得獎名單 (.txt)</button>
+    </div>
+    <div class="stub-list" id="stubList">
+      <div class="empty-history">尚無得獎紀錄</div>
+    </div>
+  </div>
+
+  <div class="panel pool-panel">
+    <div class="panel-title"><span class="swatch"></span>目前參加名單</div>
+    <div class="pool-chips" id="poolChips"></div>
+  </div>
+
+  <footer>BILLGO 比爾購 · 抽獎機 v1.0 — 僅供內部活動使用</footer>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BUILT_IN_NAMES = ["amos941022","amos690825","chenrou99","oomeaya1024","yeung_belle","daphne980919","bliss19281","tzutung1997","candy551125","a22528419","pony4060","better____li.fe2","mux0856","ao859gr","pin573413","cherry_83520","tomson37338","chenison88","dude_bro0101","wu18.25","peichiehli0919","wonson5747","gigichen0201","z_z393889","jiangming00172","hunterhope0917","j.k.cccyy","wunimei5","katina431102","uttsaiwork09172","_suzanne_126","hunter09172","miamia09188","xiuchen2024","omega198909","deron09172","edentung_","adayueh_","love_0080122","s80375990","yu_shiu_chen","hsuan8628","karta8534","luck55311","lai_lai1115","rrhello123456","oliver331120","nigi0917","fightwin0917","luckyterry09172","nana_yu09","qq_rayi","momo_ts","gini_0917","gini09173","rivertung0917","mingyang0917","laura09172","ziman09172","israel19890917","tungterry0917","upton_1989","yuehtung09172","belle_1115","qadir0917","zhiweng7","yuechuang","runn_tung","pa09172","wenshin4","shumeng_lu","sevenchi2024","kaiyueh1989","joyce_lai7","peppayueh","ikeal_u","funlee1989","elsachang1128","cqr_l.travel","caishizi","valeska202206","gin.smile","beautyknowweng","xinzing09172","vickychung_1128","diatsai0917","cinru1986","lihuimin91","betchang1986","sidney349776","amber060557","appleru1989","wuwu_tsai","tsai8016","oliver_cheng227","feng266398","rendar501","forest_6_7","coog7224","tweety_20190715","youngeraugust","dazhicai","her050599","onion.yu0","bonbon1888","pp83_1225","doralee.0205","youguzhui","andy2028","bonbon_tsai","believeicando","zhimning0810","yichu4321"];
+
+let pool = [...BUILT_IN_NAMES];
+let winners = []; // {name, round, time}
+let drawing = false;
+
+const statTotal = document.getElementById('statTotal');
+const statWon = document.getElementById('statWon');
+const statLeft = document.getElementById('statLeft');
+const reveal = document.getElementById('reveal');
+const stubList = document.getElementById('stubList');
+const poolChips = document.getElementById('poolChips');
+const drawBtn = document.getElementById('drawBtn');
+const drawCountInput = document.getElementById('drawCount');
+const noRepeatInput = document.getElementById('noRepeat');
+const fileInput = document.getElementById('fileInput');
+const uploadNote = document.getElementById('uploadNote');
+const builtInCount = document.getElementById('builtInCount');
+const exportBtn = document.getElementById('exportBtn');
+const toast = document.getElementById('toast');
+
+builtInCount.textContent = BUILT_IN_NAMES.length;
+
+function showToast(msg){
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(()=> toast.classList.remove('show'), 2200);
+}
+
+function renderStats(){
+  const wonSet = new Set(winners.map(w=>w.name));
+  statTotal.textContent = pool.length;
+  statWon.textContent = wonSet.size;
+  statLeft.textContent = noRepeatInput.checked ? (pool.length - wonSet.size) : pool.length;
+}
+
+function renderPool(){
+  const wonSet = new Set(winners.map(w=>w.name));
+  poolChips.innerHTML = pool.map(n =>
+    `<span class="pool-chip ${wonSet.has(n) ? 'won':''}">${escapeHtml(n)}</span>`
+  ).join('');
+}
+
+function renderHistory(){
+  if(winners.length === 0){
+    stubList.innerHTML = '<div class="empty-history">尚無得獎紀錄</div>';
+    return;
+  }
+  stubList.innerHTML = winners.slice().reverse().map((w, idx) => {
+    const displayIdx = winners.length - idx;
+    return `<div class="stub">
+      <span class="round-no">第 ${w.round} 輪</span>
+      <span class="name">${escapeHtml(w.name)}</span>
+      <span class="stamp">已中獎</span>
+      <span class="time">${w.time}</span>
+    </div>`;
+  }).join('');
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+function currentRoundNumber(){
+  if(winners.length === 0) return 1;
+  return winners[winners.length-1].round + 1;
+}
+
+function pickWinners(n){
+  const wonSet = new Set(winners.map(w=>w.name));
+  let candidates = noRepeatInput.checked ? pool.filter(p => !wonSet.has(p)) : pool.slice();
+  if(candidates.length === 0) return [];
+  n = Math.min(n, candidates.length);
+  const chosen = [];
+  const arr = candidates.slice();
+  for(let i=0;i<n;i++){
+    const idx = Math.floor(Math.random()*arr.length);
+    chosen.push(arr[idx]);
+    arr.splice(idx,1);
+  }
+  return chosen;
+}
+
+function formatTime(){
+  const d = new Date();
+  const pad = x => String(x).padStart(2,'0');
+  return `${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+}
+
+function runDraw(){
+  if(drawing) return;
+  if(pool.length === 0){
+    showToast('目前沒有名單，請先上傳 XLSX 或確認內建名單');
+    return;
+  }
+  const n = Math.max(1, parseInt(drawCountInput.value || '1', 10));
+  const wonSet = new Set(winners.map(w=>w.name));
+  const candidates = noRepeatInput.checked ? pool.filter(p => !wonSet.has(p)) : pool.slice();
+  if(candidates.length === 0){
+    showToast('所有人都已經中獎過囉！可取消勾選「不重複抽出」再抽一次');
+    return;
+  }
+
+  drawing = true;
+  drawBtn.disabled = true;
+  reveal.classList.remove('empty');
+
+  let ticks = 0;
+  const maxTicks = 18;
+  const spinPool = candidates.length ? candidates : pool;
+
+  const interval = setInterval(() => {
+    const shuffled = spinPool[Math.floor(Math.random()*spinPool.length)];
+    reveal.innerHTML = `<span class="spin-name">${escapeHtml(shuffled)}</span>`;
+    ticks++;
+    if(ticks >= maxTicks){
+      clearInterval(interval);
+      finalizeDraw(n);
+    }
+  }, 65);
+}
+
+function finalizeDraw(n){
+  const chosen = pickWinners(n);
+  const round = currentRoundNumber();
+  const time = formatTime();
+  chosen.forEach(name => winners.push({name, round, time}));
+
+  reveal.innerHTML = chosen.map(name => `<span class="winner-chip">${escapeHtml(name)}</span>`).join('');
+  if(chosen.length === 0){
+    reveal.classList.add('empty');
+    reveal.innerHTML = '<div class="placeholder">沒有可抽出的人選了</div>';
+  }
+
+  renderStats();
+  renderHistory();
+  renderPool();
+  drawing = false;
+  drawBtn.disabled = false;
+}
+
+drawBtn.addEventListener('click', runDraw);
+
+exportBtn.addEventListener('click', () => {
+  if(winners.length === 0){
+    showToast('目前還沒有得獎紀錄');
+    return;
+  }
+  const lines = winners.map((w,i) => `${i+1}. 第${w.round}輪　${w.name}　${w.time}`);
+  const blob = new Blob([lines.join('\n')], {type:'text/plain;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'BILLGO_得獎名單.txt';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+});
+
+fileInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (evt) => {
+    try{
+      const data = new Uint8Array(evt.target.result);
+      const wb = XLSX.read(data, {type:'array'});
+      const sheet = wb.Sheets[wb.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet, {header:1});
+      if(rows.length === 0){ showToast('這個檔案是空的'); return; }
+
+      const header = rows[0].map(h => String(h||''));
+      let colIdx = header.findIndex(h => /帳號|username|account|IG/i.test(h));
+      if(colIdx === -1){
+        // fallback: pick the column with the most string-like unique values
+        let bestCol = 0, bestScore = -1;
+        for(let c=0; c<Math.max(...rows.map(r=>r.length)); c++){
+          const vals = rows.slice(1).map(r => r[c]).filter(v => v !== undefined && v !== '');
+          const stringy = vals.filter(v => typeof v === 'string' && isNaN(v));
+          if(stringy.length > bestScore){ bestScore = stringy.length; bestCol = c; }
+        }
+        colIdx = bestCol;
+      }
+
+      const names = rows.slice(1)
+        .map(r => r[colIdx])
+        .filter(v => v !== undefined && v !== null && String(v).trim() !== '')
+        .map(v => String(v).trim());
+
+      const uniqueNames = [...new Set(names)];
+      if(uniqueNames.length === 0){ showToast('找不到可用的帳號欄位'); return; }
+
+      pool = uniqueNames;
+      winners = [];
+      uploadNote.innerHTML = `已載入上傳檔案，共 <b>${uniqueNames.length}</b> 人（欄位：${escapeHtml(header[colIdx] || '第'+(colIdx+1)+'欄')}）。`;
+      renderStats();
+      renderPool();
+      renderHistory();
+      reveal.classList.add('empty');
+      reveal.innerHTML = '<div class="placeholder">名單已更新，按下「抽獎」開始抽出幸運兒</div>';
+      showToast(`已成功匯入 ${uniqueNames.length} 筆名單`);
+    }catch(err){
+      showToast('讀取檔案失敗，請確認是有效的 XLSX 檔案');
+      console.error(err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+});
+
+// init
+renderStats();
+renderPool();
+renderHistory();
+</script>
+</body>
+</html>
